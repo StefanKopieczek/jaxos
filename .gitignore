@@ -5,3 +5,7 @@
 
 build
 .gradle
+
+*.iml
+*.ipr
+*.iws
