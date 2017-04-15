@@ -1,4 +1,4 @@
-package com.stefankopieczek.jaxos;
+package com.stefankopieczek.jaxos.acceptor;
 
 import com.stefankopieczek.jaxos.core.Promise;
 import com.stefankopieczek.jaxos.core.Proposal;
