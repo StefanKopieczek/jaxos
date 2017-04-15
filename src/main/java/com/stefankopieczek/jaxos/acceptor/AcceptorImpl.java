@@ -28,9 +28,9 @@ public class AcceptorImpl<V> implements Acceptor<V> {
             }
 
             if (acceptedProposal != null) {
-                return Optional.of(new Promise<V>(acceptedProposal));
+                return Optional.of(Promise.withProposal(acceptedProposal));
             } else {
-                return Optional.of(new Promise<V>(proposal));
+                return Optional.of(Promise.withoutProposal());
             }
         }
     }

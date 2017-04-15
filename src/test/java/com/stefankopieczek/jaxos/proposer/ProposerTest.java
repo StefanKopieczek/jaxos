@@ -56,7 +56,7 @@ public class ProposerTest {
         proposer.propose("foo");
         assertEquals(proposal2.getProposalNumber() + 1, acceptor1.lastPrepare.getProposalNumber());
         assertEquals(proposal2.getProposalNumber() + 1, acceptor2.lastPrepare.getProposalNumber());
-        assertEquals(proposal2.getProposalNumber() + 1, acceptor3.lastPrepare.getProposalNumber());
+        assertEquals(proposal3.getProposalNumber(), acceptor3.lastPrepare.getProposalNumber());
     }
 
     @Test
@@ -94,21 +94,26 @@ public class ProposerTest {
         acceptor3.prepare(proposal3);
         acceptor4.prepare(proposal3);
         acceptor5.prepare(proposal3);
+        acceptor5.accept(proposal3);
+        acceptor1.accept(proposal1);
+        acceptor2.accept(proposal2);
+        acceptor3.accept(proposal3);
+        acceptor4.accept(proposal3);
 
         // Intentionally pass the acceptors in out of order to ensure we don't just trust the last
         // one in the list.
         Proposer<String> proposer = new ProposerImpl<>(1, Arrays.asList(acceptor1, acceptor3, acceptor4, acceptor5, acceptor2));
         proposer.propose("foo");
 
-        assertEquals(proposal3, acceptor1.lastAccept.getValue());
+        assertEquals(proposal3.getValue(), acceptor1.lastAccept.getValue());
         assertEquals(proposal3.getProposalNumber() + 1, acceptor1.lastAccept.getProposalNumber());
-        assertEquals(proposal3, acceptor2.lastAccept.getValue());
+        assertEquals(proposal3.getValue(), acceptor2.lastAccept.getValue());
         assertEquals(proposal3.getProposalNumber() + 1, acceptor2.lastAccept.getProposalNumber());
-        assertEquals(proposal3, acceptor3.lastAccept.getValue());
+        assertEquals(proposal3.getValue(), acceptor3.lastAccept.getValue());
         assertEquals(proposal3.getProposalNumber() + 1, acceptor3.lastAccept.getProposalNumber());
-        assertEquals(proposal3, acceptor4.lastAccept.getValue());
+        assertEquals(proposal3.getValue(), acceptor4.lastAccept.getValue());
         assertEquals(proposal3.getProposalNumber() + 1, acceptor4.lastAccept.getProposalNumber());
-        assertEquals(proposal3, acceptor5.lastAccept.getValue());
+        assertEquals(proposal3.getValue(), acceptor5.lastAccept.getValue());
         assertEquals(proposal3.getProposalNumber() + 1, acceptor5.lastAccept.getProposalNumber());
     }
 
@@ -129,6 +134,7 @@ public class ProposerTest {
                 if (p.getProposalNumber() <= 20) {
                     lastPrepare = proposal1;
                     return false;
+
                 } else {
                     lastAccept = p;
                     return true;
@@ -138,7 +144,7 @@ public class ProposerTest {
 
         Proposer<String> proposer = new ProposerImpl<>(1, Collections.singletonList(acceptor));
         proposer.propose("foo");
-        assertEquals(proposal1.getProposalNumber(), acceptor.lastAccept.getProposalNumber());
+        assertEquals(proposal1.getProposalNumber() + 1, acceptor.lastAccept.getProposalNumber());
         assertEquals("foo", acceptor.lastAccept.getValue());
     }
 
@@ -169,10 +175,16 @@ public class ProposerTest {
         public Proposal<V> lastAccept = null;
 
         @Override
-        public Optional<Promise<V>> prepare(Proposal<V> p) {
-            if (lastPrepare == null || p.getProposalNumber() < lastPrepare.getProposalNumber()) {
-                lastPrepare = p;
-                return Optional.of(new Promise<>(p));
+        public Optional<Promise<V>> prepare(Proposal<V> proposal) {
+            if (lastPrepare == null || proposal.getProposalNumber() > lastPrepare.getProposalNumber()) {
+                lastPrepare = proposal;
+                Promise<V> promise;
+                if (lastAccept != null) {
+                    promise = Promise.withProposal(lastAccept);
+                } else {
+                    promise = Promise.withoutProposal();
+                }
+                return Optional.of(promise);
             } else {
                 return Optional.empty();
             }

@@ -21,8 +21,8 @@ public class AcceptorTest {
         Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.emptyList());
         Optional<Promise<String>> result = acceptor.prepare(p1);
         assertTrue(result.isPresent());
-        Proposal<String> proposal = result.get().getAcceptableProposal();
-        assertEquals(p1, proposal);
+        Promise<String> promise = result.get();
+        assertFalse(promise.hasProposal());
     }
 
     @Test
@@ -31,8 +31,8 @@ public class AcceptorTest {
         acceptor.prepare(p1);
         Optional<Promise<String>> result = acceptor.prepare(p2);
         assertTrue(result.isPresent());
-        Proposal<String> proposal = result.get().getAcceptableProposal();
-        assertEquals(p2, proposal);
+        Promise<String> promise = result.get();
+        assertFalse(promise.hasProposal());
     }
 
     @Test
@@ -65,7 +65,9 @@ public class AcceptorTest {
         acceptor.accept(p1);
         Optional<Promise<String>> result = acceptor.prepare(p2);
         assertTrue(result.isPresent());
-        assertEquals(p1, result.get().getAcceptableProposal());
+        Promise<String> promise = result.get();
+        assertTrue(promise.hasProposal());
+        assertEquals(p1, promise.getProposal());
     }
 
     @Test

@@ -1,13 +1,27 @@
 package com.stefankopieczek.jaxos.core;
 
-public final class Promise<V> {
-    private final Proposal<V> acceptableProposal;
+import java.util.Optional;
 
-    public Promise(Proposal<V> acceptableProposal) {
-        this.acceptableProposal = acceptableProposal;
+public final class Promise<V> {
+    private final Optional<Proposal<V>> proposal;
+
+    public static <V> Promise<V> withProposal(Proposal<V> proposal) {
+        return new Promise<>(Optional.of(proposal));
     }
 
-    public Proposal<V> getAcceptableProposal() {
-        return this.acceptableProposal;
+    public static <V> Promise<V> withoutProposal() {
+        return new Promise<>(Optional.empty());
+    }
+
+    private Promise(Optional<Proposal<V>> proposal) {
+        this.proposal = proposal;
+    }
+
+    public boolean hasProposal() {
+        return proposal.isPresent();
+    }
+
+    public Proposal<V> getProposal() {
+        return this.proposal.get();
     }
 }
