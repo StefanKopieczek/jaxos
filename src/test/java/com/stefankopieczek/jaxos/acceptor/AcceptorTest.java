@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.Future;
 import java.util.Optional;
@@ -17,7 +18,7 @@ public class AcceptorTest {
     private static final Proposal<String> p2 = new Proposal<>(2, "bar");
     @Test
     public void initialProposal() {
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.emptyList());
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.emptyList());
         Optional<Promise<String>> result = acceptor.prepare(p1);
         assertTrue(result.isPresent());
         Proposal<String> proposal = result.get().getAcceptableProposal();
@@ -26,7 +27,7 @@ public class AcceptorTest {
 
     @Test
     public void greaterProposalBeforeAccept() {
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.emptyList());
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.emptyList());
         acceptor.prepare(p1);
         Optional<Promise<String>> result = acceptor.prepare(p2);
         assertTrue(result.isPresent());
@@ -36,7 +37,7 @@ public class AcceptorTest {
 
     @Test
     public void lesserProposalBeforeAccept() {
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.emptyList());
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.emptyList());
         acceptor.prepare(p2);
         Optional<Promise<String>> result = acceptor.prepare(p1);
         assertFalse(result.isPresent());
@@ -44,17 +45,22 @@ public class AcceptorTest {
 
     @Test
     public void acceptRequest() {
-        DummyLearner<String> learner = new DummyLearner<>();
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.singletonList(learner));
+        DummyLearner<String> learner1 = new DummyLearner<>();
+        DummyLearner<String> learner2 = new DummyLearner<>();
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Arrays.asList(learner1, learner2));
         acceptor.prepare(p1);
         assertTrue(acceptor.accept(p1));
-        assertTrue(learner.hasLearnt);
-        assertEquals(p1, learner.proposal);
+        assertTrue(learner1.hasLearnt);
+        assertEquals(p1, learner1.proposal);
+        assertEquals(1, learner1.teacherId);
+        assertTrue(learner2.hasLearnt);
+        assertEquals(p1, learner2.proposal);
+        assertEquals(1, learner2.teacherId);
     }
 
     @Test
     public void greaterProposalAfterAccept() {
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.emptyList());
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.emptyList());
         acceptor.prepare(p1);
         acceptor.accept(p1);
         Optional<Promise<String>> result = acceptor.prepare(p2);
@@ -64,7 +70,7 @@ public class AcceptorTest {
 
     @Test
     public void lesserProposalAfterAccept() {
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.emptyList());
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.emptyList());
         acceptor.prepare(p2);
         acceptor.accept(p2);
         Optional<Promise<String>> result = acceptor.prepare(p1);
@@ -74,7 +80,7 @@ public class AcceptorTest {
     @Test
     public void lesserAcceptRequestAfterProposal() {
         DummyLearner<String> learner = new DummyLearner<>();
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.singletonList(learner));
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.singletonList(learner));
         acceptor.prepare(p1);
         acceptor.prepare(p2);
         assertFalse(acceptor.accept(p1));
@@ -84,7 +90,7 @@ public class AcceptorTest {
     @Test
     public void greaterAcceptRequestAfterProposal() {
         DummyLearner<String> learner = new DummyLearner<>();
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.singletonList(learner));
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.singletonList(learner));
         acceptor.prepare(p1);
         acceptor.prepare(p2);
         assertTrue(acceptor.accept(p2));
@@ -95,7 +101,7 @@ public class AcceptorTest {
     @Test
     public void greaterAcceptRequestAfterAccept() {
         DummyLearner<String> learner = new DummyLearner<>();
-        Acceptor<String> acceptor = new AcceptorImpl<>(Collections.singletonList(learner));
+        Acceptor<String> acceptor = new AcceptorImpl<>(1, Collections.singletonList(learner));
         acceptor.prepare(p1);
         acceptor.accept(p1);
         acceptor.prepare(p2);
