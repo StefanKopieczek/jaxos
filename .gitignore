@@ -2,3 +2,6 @@
 *.swp
 *.class
 *.jar
+
+build
+.gradle
