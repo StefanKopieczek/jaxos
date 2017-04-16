@@ -118,7 +118,7 @@ public class AcceptorTest {
         public boolean hasLearnt = false;
 
         @Override
-        public Future<V> getValue() {
+        public V getValue() {
             // Unused
             return null;
         }

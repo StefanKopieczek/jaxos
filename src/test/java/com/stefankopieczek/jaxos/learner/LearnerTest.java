@@ -2,6 +2,9 @@ package com.stefankopieczek.jaxos.learner;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.internal.runners.statements.FailOnTimeout;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 import org.junit.rules.Timeout;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -14,8 +17,24 @@ import com.stefankopieczek.jaxos.core.Proposal;
 
 
 public class LearnerTest {
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(10);
+    private static final int TIMEOUT_MS = 1000;
+
+    // Crazy black magic to turn JUnit TestTimedOutExceptions into
+    // TimeoutExceptions so that we can expect them in tests.
+	@Rule
+    public Timeout timeout = new Timeout(TIMEOUT_MS) {
+        public Statement apply(Statement base, Description description) {
+            return new FailOnTimeout(base, TIMEOUT_MS) {
+                @Override
+                public void evaluate() throws Throwable {
+                    try {
+                        super.evaluate();
+                        throw new TimeoutException();
+                    } catch (Exception e) {}
+                }
+            };
+        }
+    };
 
     private static int FUTURE_TIMEOUT_SECS = 1;
 
@@ -36,7 +55,7 @@ public class LearnerTest {
     public void learnSingleValue() throws TimeoutException {
         Learner<String> learner = new LearnerImpl<>(1);
         learner.teach(1, p1a);
-        assertEquals(p1a.getValue(), timedGet(learner.getValue()));
+        assertEquals(p1a.getValue(), learner.getValue());
     }
 
     @Test
@@ -44,7 +63,7 @@ public class LearnerTest {
         Learner<String> learner = new LearnerImpl<>(1);
         learner.teach(1, p1a);
         learner.teach(1, p2b);
-        assertEquals(p2b.getValue(), timedGet(learner.getValue()));
+        assertEquals(p2b.getValue(), learner.getValue());
     }
 
     @Test
@@ -52,21 +71,21 @@ public class LearnerTest {
         Learner<String> learner = new LearnerImpl<>(1);
         learner.teach(1, p2b);
         learner.teach(1, p1a);
-        assertEquals(p1a.getValue(), timedGet(learner.getValue()));
+        assertEquals(p2b.getValue(), learner.getValue());
     }
 
     @Test(expected=TimeoutException.class)
     public void tooFewResponses1() throws TimeoutException  {
         Learner<String> learner = new LearnerImpl<>(2);
         learner.teach(1, p1a);
-        timedGet(learner.getValue());
+        learner.getValue();
     }
 
     @Test(expected=TimeoutException.class)
     public void tooFewResponses2() throws TimeoutException  {
         Learner<String> learner = new LearnerImpl<>(3);
         learner.teach(1, p1a);
-        timedGet(learner.getValue());
+        learner.getValue();
     }
 
     @Test(expected=TimeoutException.class)
@@ -76,7 +95,7 @@ public class LearnerTest {
         learner.teach(2, p1a);
         learner.teach(1, p2b);
         learner.teach(2, p2b);
-        timedGet(learner.getValue());
+        learner.getValue();
     }
 
     @Test(expected=TimeoutException.class)
@@ -85,7 +104,7 @@ public class LearnerTest {
         learner.teach(1, p1a);
         learner.teach(2, p1b);
         learner.teach(3, p1c);
-        timedGet(learner.getValue());
+        learner.getValue();
     }
 
     @Test(expected=TimeoutException.class)
@@ -95,7 +114,7 @@ public class LearnerTest {
         learner.teach(2, p1a);
         learner.teach(3, p2b);
         learner.teach(4, p2b);
-        timedGet(learner.getValue());
+        learner.getValue();
     }
 
     @Test
@@ -105,7 +124,7 @@ public class LearnerTest {
         learner.teach(2, p1b);
         learner.teach(3, p1c);
         learner.teach(1, p2b);
-        assertEquals(p1b.getValue(), timedGet(learner.getValue()));
+        assertEquals(p1b.getValue(), learner.getValue());
     }
 
     @Test
@@ -115,7 +134,7 @@ public class LearnerTest {
         learner.teach(2, p1b);
         learner.teach(3, p1c);
         learner.teach(1, p2c);
-        assertEquals(p1c.getValue(), timedGet(learner.getValue()));
+        assertEquals(p1c.getValue(), learner.getValue());
     }
 
     @Test
@@ -125,7 +144,7 @@ public class LearnerTest {
         learner.teach(2, p1b);
         learner.teach(3, p1c);
         learner.teach(3, p2a);
-        assertEquals(p1a.getValue(), timedGet(learner.getValue()));
+        assertEquals(p1a.getValue(), learner.getValue());
     }
 
     @Test
@@ -136,7 +155,7 @@ public class LearnerTest {
         learner.teach(3, p1c);
         learner.teach(1, p2d);
         learner.teach(1, p3b);
-        assertEquals(p1b.getValue(), timedGet(learner.getValue()));
+        assertEquals(p1b.getValue(), learner.getValue());
     }
 
     @Test
@@ -149,7 +168,7 @@ public class LearnerTest {
         learner.teach(1, p2c);
         learner.teach(2, p2c);
         learner.teach(4, p2c);
-        timedGet(learner.getValue());
+        learner.getValue();
     }
 
     private <V> V timedGet(Future<V> future) throws TimeoutException {
