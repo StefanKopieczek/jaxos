@@ -16,4 +16,9 @@ public final class Proposal<V> {
     public V getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "<Proposal: seq #" + proposalNumber + "; value='" + value + "'>";
+    }
 }
